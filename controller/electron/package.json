@@ -1,7 +1,7 @@
 {
-  "name": "win-management-electron",
+  "name": "mds-win-shepherd-electron",
   "version": "1.0.0",
-  "description": "Electron wrapper for Windows Management Dashboard",
+  "description": "MdsWinShepherd Electron - Desktop application wrapper for the Windows management dashboard",
   "main": "dist/main.js",
   "scripts": {
     "dev": "concurrently \"npm run build:watch\" \"npm run start:dev\"",
@@ -24,8 +24,8 @@
     "wait-on": "^7.0.1"
   },
   "build": {
-    "appId": "com.winmanagement.dashboard",
-    "productName": "Windows Management Dashboard",
+    "appId": "com.mdswinshepherd.desktop",
+    "productName": "MdsWinShepherd",
     "directories": {
       "output": "../../dist"
     },
@@ -41,5 +41,14 @@
       "oneClick": false,
       "allowToChangeInstallationDirectory": true
     }
-  }
+  },
+  "keywords": [
+    "windows-management",
+    "electron",
+    "desktop",
+    "shepherd",
+    "system-control"
+  ],
+  "author": "MdsWinShepherd Team",
+  "license": "MIT"
 }

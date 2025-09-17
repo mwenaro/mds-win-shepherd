@@ -1,29 +1,30 @@
-# Windows Management Dashboard
+# 🐑 MdsWinShepherd
 
-A comprehensive Windows management tool consisting of an Agent (Windows Service) and Controller Dashboard for remote Windows PC management.
+**A comprehensive Windows system management tool with agent-controller architecture for remote PC control and monitoring.**
 
-## 🏗️ Architecture
+MdsWinShepherd provides a modern, web-based dashboard to manage Windows systems remotely through a lightweight agent service. Perfect for system administrators, IT professionals, and power users who need reliable remote Windows management.
 
-- **Agent**: Node.js + TypeScript service that runs on Windows machines
-- **Controller**: Electron desktop app wrapping a Next.js + Tailwind dashboard
-- **Communication**: REST API + WebSocket for real-time updates
+## � Features
 
-## ✨ Features
+### 🎮 **System Control**
+- **Program Management**: Start and stop Windows applications remotely
+- **System Operations**: Restart PC, manage network connectivity  
+- **Real-time Monitoring**: Live system status updates via WebSocket
+- **Process Management**: View and control running processes
 
-### Agent Features
-- Start Windows programs by file path
-- Stop/kill programs by process name
-- Restart PC remotely
-- Disconnect/reconnect internet (disable/enable network adapters)
-- System status reporting (CPU, memory, network, processes)
-- WebSocket support for real-time communication
+### 🏗️ **Architecture**
+- **🔧 Agent Service**: Lightweight Node.js + TypeScript Windows service
+- **🎨 Controller Dashboard**: Modern Next.js + Tailwind CSS web interface
+- **🖥️ Desktop App**: Electron wrapper for native desktop experience
+- **⚡ Real-time Communication**: WebSocket + REST API integration
 
-### Controller Features  
-- Clean Tailwind UI dashboard
-- Real-time PC status monitoring
-- Remote command execution with visual feedback
-- Activity logging with timestamps
-- Electron desktop app for native experience
+### 🛡️ **Built for Windows**
+- Native Windows command integration
+- PowerShell support for advanced operations
+- Windows service architecture
+- Executable compilation for easy deployment
+
+
 
 ## 🚀 Quick Start
 
@@ -95,7 +96,7 @@ curl -X POST http://localhost:3001/stop -H "Content-Type: application/json" -d "
 ## 📁 Project Structure
 
 ```
-win-management-app/
+mds-win-shepherd/
 ├── agent/                    # Windows Agent Service
 │   ├── src/
 │   │   ├── index.ts         # Express server & WebSocket
@@ -211,4 +212,28 @@ npm run dist  # Creates installer using electron-builder
 
 ## 📄 License
 
-MIT License - see LICENSE file for details.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/amazing-feature`
+3. Commit changes: `git commit -m 'Add amazing feature'`
+4. Push to branch: `git push origin feature/amazing-feature`
+5. Open a Pull Request
+
+## 📞 Support
+
+- **Issues**: [GitHub Issues](https://github.com/yourusername/mds-win-shepherd/issues)
+- **Documentation**: Check the `/docs` folder (coming soon)
+- **Community**: Join our discussions in GitHub Discussions
+
+## 🙏 Acknowledgments
+
+- Built with ❤️ for the Windows system administration community
+- Inspired by the need for simple, effective remote PC management
+- Thanks to all contributors and users of MdsWinShepherd
+
+---
+
+**MdsWinShepherd v1.0.0** - Your trusted Windows System Shepherd 🐑

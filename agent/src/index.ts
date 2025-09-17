@@ -8,7 +8,11 @@ import {
   restartPC, 
   disconnectInternet, 
   reconnectInternet,
-  getSystemStatus 
+  getSystemStatus,
+  getNetworkConnectionDetails,
+  getPCIdentification,
+  startProgramSmart,
+  findProgramPath
 } from './commands';
 
 const app = express();
@@ -24,18 +28,24 @@ const wss = new WebSocketServer({ server });
 
 // WebSocket connection handling
 wss.on('connection', (ws: WebSocket) => {
-  console.log('Controller connected via WebSocket');
+  console.log('🔗 MdsWinShepherd Controller connected via WebSocket');
   
   ws.on('message', (data: any) => {
     console.log('Received:', data.toString());
   });
   
   ws.on('close', () => {
-    console.log('Controller disconnected');
+    console.log('📡 MdsWinShepherd Controller disconnected');
   });
   
-  // Send initial status
-  ws.send(JSON.stringify({ type: 'status', data: getSystemStatus() }));
+  // Send initial status with PC identification
+  const systemStatus = getSystemStatus();
+  const pcInfo = getPCIdentification();
+  ws.send(JSON.stringify({ 
+    type: 'status', 
+    data: systemStatus,
+    pcInfo: pcInfo
+  }));
 });
 
 // Broadcast to all connected clients
@@ -51,7 +61,22 @@ const broadcast = (message: any) => {
 
 // Health check
 app.get('/health', (req: Request, res: Response) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+  res.json({ 
+    service: 'MdsWinShepherd Agent',
+    version: '1.0.0',
+    status: 'ok', 
+    timestamp: new Date().toISOString() 
+  });
+});
+
+// Get PC identification info
+app.get('/pc-info', (req: Request, res: Response) => {
+  try {
+    const pcInfo = getPCIdentification();
+    res.json({ success: true, data: pcInfo });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
+  }
 });
 
 // Get system status
@@ -72,7 +97,8 @@ app.post('/start', async (req: Request, res: Response) => {
       return res.status(400).json({ success: false, error: 'Program path is required' });
     }
     
-    const result = await startProgram(path);
+    // Try smart program detection first
+    const result = await startProgramSmart(path);
     broadcast({ type: 'log', message: `Started program: ${path}` });
     res.json({ success: true, data: result });
   } catch (error: any) {
@@ -121,6 +147,7 @@ app.post('/disconnect', async (req: Request, res: Response) => {
     broadcast({ type: 'log', message: 'Internet disconnected' });
     res.json({ success: true, data: result });
   } catch (error: any) {
+    console.error('Error disconnecting internet:', error);
     broadcast({ type: 'error', message: `Failed to disconnect internet: ${error.message}` });
     res.status(500).json({ success: false, error: error.message });
   }
@@ -133,16 +160,52 @@ app.post('/reconnect', async (req: Request, res: Response) => {
     broadcast({ type: 'log', message: 'Internet reconnected' });
     res.json({ success: true, data: result });
   } catch (error: any) {
+    console.error('Error reconnecting internet:', error);
     broadcast({ type: 'error', message: `Failed to reconnect internet: ${error.message}` });
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Get network details
+app.get('/network', async (req: Request, res: Response) => {
+  try {
+    const { getNetworkConnectionDetails } = await import('./commands');
+    const networkDetails = await getNetworkConnectionDetails();
+    res.json({ success: true, data: networkDetails });
+  } catch (error: any) {
+    console.error('Error getting network details:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Find program path
+app.post('/find-program', async (req: Request, res: Response) => {
+  try {
+    const { programName } = req.body;
+    if (!programName) {
+      return res.status(400).json({ success: false, error: 'Program name is required' });
+    }
+    
+    const foundPath = await findProgramPath(programName);
+    if (foundPath) {
+      res.json({ success: true, data: { programName, path: foundPath, found: true } });
+    } else {
+      res.json({ success: true, data: { programName, path: null, found: false } });
+    }
+  } catch (error: any) {
     res.status(500).json({ success: false, error: error.message });
   }
 });
 
 // Start server
 server.listen(PORT, () => {
-  console.log(`Windows Management Agent running on port ${PORT}`);
-  console.log(`HTTP API: http://localhost:${PORT}`);
-  console.log(`WebSocket: ws://localhost:${PORT}`);
+  const pcInfo = getPCIdentification();
+  console.log(`🐑 MdsWinShepherd Agent running on port ${PORT}`);
+  console.log(`💻 PC Name: ${pcInfo.pcName}`);
+  console.log(`🆔 Agent ID: ${pcInfo.agentId}`);
+  console.log(`🌐 HTTP API: http://localhost:${PORT}`);
+  console.log(`⚡ WebSocket: ws://localhost:${PORT}`);
+  console.log(`📊 Dashboard: Connect your MdsWinShepherd Controller`);
 });
 
 // Graceful shutdown

@@ -1,11 +1,11 @@
 {
-  "name": "win-management-agent",
+  "name": "mds-win-shepherd-agent",
   "version": "1.0.0",
-  "description": "Windows management agent service",
+  "description": "MdsWinShepherd Agent - Windows system management service with REST API and WebSocket support",
   "main": "dist/index.js",
   "scripts": {
     "dev": "ts-node-dev --respawn src/index.ts",
-    "build": "tsc && pkg dist/index.js --target win --output agent.exe",
+    "build": "tsc && pkg dist/index.js --target win --output mds-win-shepherd-agent.exe",
     "start": "node dist/index.js",
     "compile": "tsc"
   },
@@ -22,5 +22,15 @@
     "pkg": "^5.8.1",
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.1.6"
-  }
+  },
+  "keywords": [
+    "windows",
+    "system-agent",
+    "remote-control",
+    "express",
+    "websocket",
+    "shepherd"
+  ],
+  "author": "MdsWinShepherd Team",
+  "license": "MIT"
 }

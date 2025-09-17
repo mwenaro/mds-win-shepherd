@@ -1,15 +1,18 @@
 {
-  "name": "win-management-app",
+  "name": "mds-win-shepherd",
   "version": "1.0.0",
-  "description": "Windows Control Dashboard (Agent + Controller)",
+  "description": "MdsWinShepherd - A comprehensive Windows system management tool with agent-controller architecture for remote PC control and monitoring",
   "scripts": {
-    "dev": "concurrently \"npm run controller:dev\" \"npm run agent:dev\"",
+    "message": "echo 'Start services in separate terminals:' && echo '1. npm run agent:dev' && echo '2. npm run controller:dev' ",
+    "dev:agent": "cd agent && npm run dev",
+    "dev":"concurrently \"npm run message\" \"npm run dev:agent\" \"npm run dev:dashboard\"",
+    "dev:dashboard": "cd controller/nextjs && npm run dev",
     "build": "npm run controller:build && npm run agent:build",
     "agent:dev": "cd agent && npm run dev",
     "agent:build": "cd agent && npm run build",
-    "controller:dev": "cd controller && npm run dev",
-    "controller:build": "cd controller && npm run build",
-    "install:all": "cd agent && npm install && cd ../controller/nextjs && npm install && cd ../electron && npm install",
+    "controller:dev": "cd controller/nextjs && npm run dev",
+    "controller:build": "cd controller/nextjs && npm run build",
+    "install:all": "cd agent && npm install && cd ../controller/nextjs && npm install && cd ../controller/electron && npm install",
     "clean": "rimraf dist && rimraf agent/dist && rimraf controller/nextjs/dist && rimraf controller/electron/dist"
   },
   "devDependencies": {
@@ -20,5 +23,19 @@
     "agent",
     "controller/nextjs",
     "controller/electron"
-  ]
+  ],
+  "keywords": [
+    "windows",
+    "system-management",
+    "remote-control",
+    "pc-control",
+    "shepherd",
+    "agent",
+    "dashboard",
+    "electron",
+    "nextjs",
+    "typescript"
+  ],
+  "author": "MdsWinShepherd Team",
+  "license": "MIT"
 }

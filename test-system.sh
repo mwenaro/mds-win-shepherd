@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo "🚀 Testing Windows Management System..."
+echo "� Testing MdsWinShepherd System..."
 echo ""
 
 # Test 1: Agent Health Check

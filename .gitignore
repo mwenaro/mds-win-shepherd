@@ -32,10 +32,10 @@ yarn-debug.log*
 yarn-error.log*
 lerna-debug.log*
 
-# === Agent Specific ===
+# === MdsWinShepherd Agent Specific ===
 agent/dist/
 agent/build/
-agent/agent.exe
+agent/mds-win-shepherd-agent.exe
 agent/*.exe
 agent/logs/
 agent/.env

@@ -91,9 +91,9 @@ const createMenu = (): void => {
           click: () => {
             dialog.showMessageBox(mainWindow, {
               type: 'info',
-              title: 'About',
-              message: 'Windows Management Dashboard',
-              detail: 'A tool for managing Windows PCs remotely'
+              title: 'About MdsWinShepherd',
+              message: '🐑 MdsWinShepherd v1.0.0',
+              detail: 'Your trusted Windows System Shepherd for remote PC control and monitoring'
             });
           }
         }
