@@ -1,0 +1,22 @@
+{
+  "agent": {
+    "port": 3001,
+    "host": "0.0.0.0",
+    "name": "",
+    "description": "MdsWinShepherd Agent for remote PC control"
+  },
+  "security": {
+    "allowedControllers": ["*"],
+    "requireAuth": false,
+    "apiKey": ""
+  },
+  "network": {
+    "enableDiscovery": true,
+    "discoveryPort": 3002,
+    "broadcastInterval": 30000
+  },
+  "logging": {
+    "level": "info",
+    "logFile": "agent.log"
+  }
+}

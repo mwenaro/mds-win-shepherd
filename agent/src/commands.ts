@@ -467,6 +467,7 @@ export async function startProgramSmart(programNameOrPath: string): Promise<stri
     // Use the existing startProgram function
     return await startProgram(programPath);
   } catch (error: any) {
+    console.error(`Failed to start program '${programNameOrPath}':`, error);
     throw new Error(`Failed to start program '${programNameOrPath}': ${error.message}`);
   }
 }

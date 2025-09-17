@@ -27,6 +27,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(data, { status: response.status });
   } catch (error: any) {
+    console.error('Error starting program on agent:', error);
     return NextResponse.json(
       { success: false, error: error.message },
       { status: 500 }

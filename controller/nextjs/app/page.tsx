@@ -34,11 +34,12 @@ export default function Dashboard() {
   const [pcs, setPcs] = useState<PC[]>([
     {
       id: '1',
-      name: 'MdsWinShepherd-Agent-01',
+      name: 'Local Agent',
       ip: 'localhost:3001',
       status: 'offline',
       lastSeen: new Date().toISOString(),
-      shepherdId: 'MdsWinShepherd-01'
+      shepherdId: 'MdsWinShepherd-01',
+      pcName: undefined // Will be updated when agent responds
     }
   ])
   const [selectedPC, setSelectedPC] = useState<string>('')
@@ -50,6 +51,8 @@ export default function Dashboard() {
   const [customName, setCustomName] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [lastOperationStatus, setLastOperationStatus] = useState<'success' | 'error' | null>(null)
+  const [newAgentIP, setNewAgentIP] = useState('')
+  const [showAgentManager, setShowAgentManager] = useState(false)
 
   // Common Windows programs - paths will be auto-detected
   const commonPrograms = [
@@ -180,6 +183,91 @@ export default function Dashboard() {
     }
   }
 
+  const addAgent = async () => {
+    if (!newAgentIP.trim()) {
+      addLog('Please enter an agent IP address')
+      return
+    }
+
+    const agentIP = newAgentIP.trim()
+    const newId = (pcs.length + 1).toString()
+    
+    // Test connection to the agent
+    try {
+      const response = await axios.get(`http://${agentIP}/status`, {
+        timeout: 5000
+      })
+      
+      if (response.data.success) {
+        const newPC: PC = {
+          id: newId,
+          name: `Agent-${newId}`,
+          ip: agentIP,
+          status: 'online',
+          lastSeen: new Date().toISOString()
+        }
+        
+        setPcs(prev => [...prev, newPC])
+        setNewAgentIP('')
+        addLog(`✅ Agent added successfully: ${agentIP}`)
+      }
+    } catch (error) {
+      addLog(`❌ Failed to connect to agent at ${agentIP}`)
+    }
+  }
+
+  const removeAgent = (pcId: string) => {
+    setPcs(prev => prev.filter(pc => pc.id !== pcId))
+    if (selectedPC === pcId) {
+      setSelectedPC('')
+    }
+    addLog(`Agent removed: ${pcId}`)
+  }
+
+  const scanForAgents = async () => {
+    addLog('🔍 Scanning network for agents...')
+    setIsLoading(true)
+    
+    // Get local network range (simplified - scanning common local IPs)
+    const baseIP = '192.168.1.' // Most common home network range
+    const promises = []
+    
+    for (let i = 100; i <= 150; i++) {
+      const ip = `${baseIP}${i}:3001`
+      promises.push(
+        axios.get(`http://${ip}/status`, { timeout: 2000 })
+          .then(() => ({ ip, success: true }))
+          .catch(() => ({ ip, success: false }))
+      )
+    }
+    
+    try {
+      const results = await Promise.all(promises)
+      const foundAgents = results.filter(r => r.success)
+      
+      for (const agent of foundAgents) {
+        // Check if we already have this agent
+        if (!pcs.find(pc => pc.ip === agent.ip)) {
+          const newId = (pcs.length + 1).toString()
+          const newPC: PC = {
+            id: newId,
+            name: `Discovered-${newId}`,
+            ip: agent.ip,
+            status: 'online',
+            lastSeen: new Date().toISOString()
+          }
+          setPcs(prev => [...prev, newPC])
+        }
+      }
+      
+      addLog(`🎯 Network scan complete. Found ${foundAgents.length} new agents`)
+    } catch (error) {
+      addLog('❌ Network scan failed')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   const checkPCStatus = async (pc: PC) => {
     try {
       // First check basic status
@@ -213,7 +301,8 @@ export default function Dashboard() {
     } catch (error) {
       return {
         ...pc,
-        status: 'offline' as const
+        status: 'offline' as const,
+        lastSeen: new Date().toISOString()
       }
     }
   }
@@ -234,36 +323,148 @@ export default function Dashboard() {
 
   return (
     <div className="max-w-6xl mx-auto space-y-6">
+      {/* Header & Agent Management */}
+      <div className="bg-white p-6 rounded-lg shadow">
+        <div className="flex justify-between items-center mb-4">
+          <div className="flex items-center gap-4">
+            <h1 className="text-2xl font-bold text-gray-800">MdsWinShepherd - Network Controller</h1>
+            <div className="text-sm text-gray-600">
+              {pcs.length} agent{pcs.length !== 1 ? 's' : ''} • {pcs.filter(pc => pc.status === 'online').length} online
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={() => window.location.reload()}
+              className="px-3 py-2 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 text-sm"
+              title="Refresh all agents"
+            >
+              🔄 Refresh
+            </button>
+            <button
+              onClick={() => setShowAgentManager(!showAgentManager)}
+              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            >
+              {showAgentManager ? 'Hide' : 'Manage Agents'}
+            </button>
+          </div>
+        </div>
+        
+        {showAgentManager && (
+          <div className="border-t pt-4 space-y-4">
+            <h2 className="text-lg font-semibold">Agent Management</h2>
+            
+            {/* Add Agent */}
+            <div className="flex gap-2">
+              <input
+                type="text"
+                placeholder="Agent IP:Port (e.g., 192.168.1.100:3001)"
+                value={newAgentIP}
+                onChange={(e) => setNewAgentIP(e.target.value)}
+                className="flex-1 px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+              />
+              <button
+                onClick={addAgent}
+                className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+              >
+                Add Agent
+              </button>
+              <button
+                onClick={scanForAgents}
+                disabled={isLoading}
+                className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 disabled:opacity-50"
+              >
+                {isLoading ? 'Scanning...' : 'Auto Discover'}
+              </button>
+            </div>
+            
+            <div className="text-sm text-gray-600">
+              <p>• Manually add agents by IP address, or use Auto Discover to scan your network</p>
+              <p>• Make sure the agent is running on the target PC and port 3001 is accessible</p>
+              <p>• Default agent port is 3001 (e.g., 192.168.1.100:3001)</p>
+            </div>
+          </div>
+        )}
+      </div>
+
       {/* PC Status Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
         {pcs.map((pc) => (
           <div
             key={pc.id}
-            className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
+            className={`relative p-5 rounded-xl border-2 cursor-pointer transition-all duration-200 shadow-sm hover:shadow-md ${
               selectedPC === pc.id
-                ? 'border-blue-500 bg-blue-50'
-                : 'border-gray-300 bg-white hover:border-gray-400'
+                ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-200'
+                : 'border-gray-200 bg-white hover:border-blue-300'
             }`}
             onClick={() => setSelectedPC(pc.id)}
           >
-            <div className="flex items-center justify-between">
-              <div className="flex flex-col">
-                <h3 className="font-semibold text-lg">{pc.pcName || pc.name}</h3>
-                {pc.shepherdId && (
-                  <span className="text-blue-600 text-sm font-medium">{pc.shepherdId}</span>
-                )}
-              </div>
-              <div className={`w-3 h-3 rounded-full ${
-                pc.status === 'online' ? 'bg-green-500' : 'bg-red-500'
-              }`} />
-            </div>
-            <p className="text-gray-600 text-sm">{pc.ip}</p>
-            {pc.agentId && (
-              <p className="text-gray-500 text-xs">Agent: {pc.agentId}</p>
+            {/* Selected indicator */}
+            {selectedPC === pc.id && (
+              <div className="absolute top-2 left-2 w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
             )}
-            <p className="text-gray-500 text-xs mt-1">
-              Last seen: {new Date(pc.lastSeen).toLocaleString()}
-            </p>
+            {/* Header with status and remove button */}
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <div className={`w-4 h-4 rounded-full ${
+                  pc.status === 'online' ? 'bg-green-500' : 'bg-red-500'
+                }`} />
+                <span className={`text-sm font-medium ${
+                  pc.status === 'online' ? 'text-green-700' : 'text-red-700'
+                }`}>
+                  {pc.status === 'online' ? '✅ Running and ready for connections' : '❌ Offline'}
+                </span>
+              </div>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  removeAgent(pc.id);
+                }}
+                className="text-red-500 hover:text-red-700 text-xs px-2 py-1 rounded hover:bg-red-50"
+                title="Remove agent"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Agent Details */}
+            <div className="space-y-2">
+              <div>
+                <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">URL:</span>
+                <p className="text-sm font-mono text-blue-600">http://{pc.ip}</p>
+              </div>
+              
+              <div>
+                <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">PC Name:</span>
+                <p className="text-sm font-semibold text-gray-800">
+                  {pc.pcName ? (
+                    pc.pcName
+                  ) : pc.status === 'offline' ? (
+                    <span className="text-gray-500 italic">Unknown - Agent Offline</span>
+                  ) : (
+                    <span className="text-gray-500 italic">Fetching...</span>
+                  )}
+                </p>
+              </div>
+              
+              {pc.agentId && (
+                <div>
+                  <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Agent ID:</span>
+                  <p className="text-xs font-mono text-gray-600 break-all">{pc.agentId}</p>
+                </div>
+              )}
+              
+              {pc.shepherdId && (
+                <div>
+                  <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Shepherd ID:</span>
+                  <p className="text-sm text-blue-600 font-medium">{pc.shepherdId}</p>
+                </div>
+              )}
+              
+              <div>
+                <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Last Seen:</span>
+                <p className="text-xs text-gray-500">{new Date(pc.lastSeen).toLocaleString()}</p>
+              </div>
+            </div>
           </div>
         ))}
       </div>

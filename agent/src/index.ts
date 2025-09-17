@@ -17,9 +17,13 @@ import {
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+const HOST = process.env.HOST || '0.0.0.0'; // Listen on all interfaces for network access
 
-// Middleware
-app.use(cors());
+// Middleware - Allow connections from controller PC
+app.use(cors({
+  origin: '*', // In production, specify controller PC IP
+  credentials: true
+}));
 app.use(express.json());
 
 // HTTP Server for WebSocket
@@ -198,14 +202,18 @@ app.post('/find-program', async (req: Request, res: Response) => {
 });
 
 // Start server
-server.listen(PORT, () => {
+server.listen(Number(PORT), HOST, async () => {
   const pcInfo = getPCIdentification();
-  console.log(`🐑 MdsWinShepherd Agent running on port ${PORT}`);
+  const networkInfo = await getNetworkConnectionDetails();
+  
+  console.log(`🐑 MdsWinShepherd Agent running on ${HOST}:${PORT}`);
   console.log(`💻 PC Name: ${pcInfo.pcName}`);
   console.log(`🆔 Agent ID: ${pcInfo.agentId}`);
-  console.log(`🌐 HTTP API: http://localhost:${PORT}`);
-  console.log(`⚡ WebSocket: ws://localhost:${PORT}`);
-  console.log(`📊 Dashboard: Connect your MdsWinShepherd Controller`);
+  console.log(`🌐 Local IP: ${networkInfo.localIP || 'Unknown'}`);
+  console.log(`📡 Network Access: http://${networkInfo.localIP || HOST}:${PORT}`);
+  console.log(`⚡ WebSocket: ws://${networkInfo.localIP || HOST}:${PORT}`);
+  console.log(`📊 Connect from Controller at: http://${networkInfo.localIP || HOST}:${PORT}`);
+  console.log(`🔒 Firewall: Ensure port ${PORT} is open for network access`);
 });
 
 // Graceful shutdown
