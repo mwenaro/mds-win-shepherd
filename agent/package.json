@@ -5,7 +5,7 @@
   "main": "dist/index.js",
   "scripts": {
     "dev": "ts-node-dev --respawn src/index.ts",
-    "build": "tsc && pkg dist/index.js --target win --output mds-win-shepherd-agent.exe",
+    "build": "tsc && pkg dist/index.js --target node18-win-x64 --output mds-win-shepherd-agent.exe",
     "start": "node dist/index.js",
     "compile": "tsc"
   },

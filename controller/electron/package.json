@@ -26,6 +26,7 @@
   "build": {
     "appId": "com.mdswinshepherd.desktop",
     "productName": "MdsWinShepherd",
+    "electronVersion": "27.0.0",
     "directories": {
       "output": "../../dist"
     },
