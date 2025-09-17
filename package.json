@@ -1,0 +1,24 @@
+{
+  "name": "win-management-app",
+  "version": "1.0.0",
+  "description": "Windows Control Dashboard (Agent + Controller)",
+  "scripts": {
+    "dev": "concurrently \"npm run controller:dev\" \"npm run agent:dev\"",
+    "build": "npm run controller:build && npm run agent:build",
+    "agent:dev": "cd agent && npm run dev",
+    "agent:build": "cd agent && npm run build",
+    "controller:dev": "cd controller && npm run dev",
+    "controller:build": "cd controller && npm run build",
+    "install:all": "cd agent && npm install && cd ../controller/nextjs && npm install && cd ../electron && npm install",
+    "clean": "rimraf dist && rimraf agent/dist && rimraf controller/nextjs/dist && rimraf controller/electron/dist"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "rimraf": "^5.0.1"
+  },
+  "workspaces": [
+    "agent",
+    "controller/nextjs",
+    "controller/electron"
+  ]
+}

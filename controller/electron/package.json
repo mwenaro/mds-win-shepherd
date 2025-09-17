@@ -1,0 +1,45 @@
+{
+  "name": "win-management-electron",
+  "version": "1.0.0",
+  "description": "Electron wrapper for Windows Management Dashboard",
+  "main": "dist/main.js",
+  "scripts": {
+    "dev": "concurrently \"npm run build:watch\" \"npm run start:dev\"",
+    "start:dev": "wait-on dist/main.js && electron dist/main.js --dev",
+    "build": "tsc",
+    "build:watch": "tsc --watch",
+    "start": "electron dist/main.js",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder"
+  },
+  "dependencies": {
+    "electron-serve": "^1.1.0"
+  },
+  "devDependencies": {
+    "electron": "^27.0.0",
+    "electron-builder": "^24.6.4",
+    "typescript": "^5.1.6",
+    "@types/node": "^20.5.0",
+    "concurrently": "^8.2.2",
+    "wait-on": "^7.0.1"
+  },
+  "build": {
+    "appId": "com.winmanagement.dashboard",
+    "productName": "Windows Management Dashboard",
+    "directories": {
+      "output": "../../dist"
+    },
+    "files": [
+      "dist/**/*",
+      "../nextjs/dist/**/*"
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "assets/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
+  }
+}

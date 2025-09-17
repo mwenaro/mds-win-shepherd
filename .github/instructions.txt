@@ -1,0 +1,74 @@
+
+# Project: Windows Control Dashboard (Agent + Controller)
+
+## Overview
+I want to build a **Windows management tool** consisting of:
+1. **Agent (Windows Service)**  
+   - Built with **Node.js + TypeScript**.  
+   - Packaged as `.exe` with `pkg` or `nexe`.  
+   - Runs in the background on Windows machines.  
+   - Exposes an HTTP + WebSocket API for remote control.  
+
+   **Agent Commands:**
+   - Start a Windows program (by path).
+   - Stop/kill a program (by name).
+   - Restart PC.
+   - Disconnect/reconnect internet (disable/enable network adapter).
+   - Report status (online, IP, OS, running processes).
+
+   Use `child_process.exec` for commands, or call PowerShell commands directly.
+
+2. **Controller Dashboard**  
+   - **Electron app** (desktop) wrapping a **Next.js + Tailwind frontend**.  
+   - Shows a list of PCs with status (online/offline).  
+   - Buttons to: start program, stop program, restart PC, disconnect network.  
+   - Backend: Next.js API routes (or Express) that forward requests to agents.  
+   - Store PC list + logs in a JSON file or MongoDB.  
+
+3. **Architecture**
+   - Agent registers itself with the Controller (via HTTP POST).  
+   - Controller sends commands via REST/WebSocket to agents.  
+   - Controller UI updates in real-time (WebSocket).  
+
+## Requirements
+- Use **Node.js + TypeScript** everywhere.
+- Use **Next.js + Tailwind** for UI.
+- Use **Electron** for packaging desktop app.
+- Keep code modular, clean, and well-documented.
+- Add scripts in `package.json` for:
+  - `dev`: run Electron + Next.js
+  - `build`: build Electron app
+  - `agent:build`: compile agent to `.exe`
+
+## First Tasks for Copilot
+1. Scaffold a **Node.js agent** with TypeScript that:
+   - Exposes an Express API (`/start`, `/stop`, `/restart`, `/disconnect`)  
+   - Executes Windows commands using `child_process.exec`.  
+   - Logs activity to console.
+
+2. Scaffold a **Next.js + Electron app** with:
+   - Tailwind UI.
+   - Simple dashboard page with buttons for the above actions.
+   - API routes that call the agent endpoints.
+
+3. Ensure modular folder structure:
+```
+
+/agent
+index.ts
+commands.ts
+/controller
+/electron
+/nextjs
+
+```
+
+---
+
+💡 Example command mapping for the Agent:
+- Start program: `exec('start "" "C:\\Path\\App.exe"')`
+- Stop program: `exec('taskkill /IM notepad.exe /F')`
+- Restart PC: `exec('shutdown /r /t 0')`
+- Disconnect Wi-Fi: `powershell.exe Disable-NetAdapter -Name "Wi-Fi" -Confirm:$false`
+```
+

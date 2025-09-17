@@ -1,0 +1,17 @@
+{
+  "name": "win-management-controller",
+  "version": "1.0.0",
+  "description": "Windows management controller dashboard",
+  "scripts": {
+    "dev": "concurrently \"npm run nextjs:dev\" \"npm run electron:dev\"",
+    "nextjs:dev": "cd nextjs && npm run dev",
+    "electron:dev": "cd electron && npm run dev",
+    "build": "npm run nextjs:build && npm run electron:build",
+    "nextjs:build": "cd nextjs && npm run build",
+    "electron:build": "cd electron && npm run build",
+    "postinstall": "cd nextjs && npm install && cd ../electron && npm install"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
