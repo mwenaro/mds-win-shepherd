@@ -201,19 +201,82 @@ app.post('/find-program', async (req: Request, res: Response) => {
   }
 });
 
+// Helper function to get local IP address
+async function getLocalIPAddress(): Promise<string> {
+  try {
+    // Method 1: Use os.networkInterfaces() (most reliable cross-platform)
+    const os = require('os');
+    const interfaces = os.networkInterfaces();
+    
+    for (const name of Object.keys(interfaces)) {
+      for (const iface of interfaces[name]) {
+        // Look for IPv4, non-internal interfaces
+        if (iface.family === 'IPv4' && !iface.internal && iface.address !== '127.0.0.1') {
+          // Skip local link addresses (169.254.x.x)
+          if (!iface.address.startsWith('169.254')) {
+            return iface.address;
+          }
+        }
+      }
+    }
+    
+    // Method 2: Use PowerShell (Windows only)
+    try {
+      const { exec } = require('child_process');
+      const { promisify } = require('util');
+      const execAsync = promisify(exec);
+      
+      const { stdout: psOutput } = await execAsync('powershell -Command "(Get-NetIPAddress -AddressFamily IPv4 | Where-Object {$_.IPAddress -notlike \'127.*\' -and $_.IPAddress -notlike \'169.254.*\'}).IPAddress | Select-Object -First 1"');
+      const ip = psOutput.trim();
+      if (ip && ip.match(/^\d+\.\d+\.\d+\.\d+$/)) {
+        return ip;
+      }
+    } catch (psError) {
+      // PowerShell failed, but we already tried os.networkInterfaces()
+    }
+    
+    // Method 3: Try Windows ipconfig if available
+    try {
+      const { exec } = require('child_process');
+      const { promisify } = require('util');
+      const execAsync = promisify(exec);
+      
+      const { stdout } = await execAsync('ipconfig');
+      const ipMatches = stdout.match(/IPv4 Address[.\s]*:\s*(\d+\.\d+\.\d+\.\d+)/g);
+      
+      if (ipMatches) {
+        for (const match of ipMatches) {
+          const ip = match.match(/(\d+\.\d+\.\d+\.\d+)/)?.[1];
+          if (ip && !ip.startsWith('127.') && !ip.startsWith('169.254')) {
+            return ip;
+          }
+        }
+      }
+    } catch (ipconfigError) {
+      // ipconfig not available (e.g., in Git Bash)
+    }
+    
+    return 'Unknown-CheckManually';
+  } catch (error) {
+    console.error('Failed to get local IP:', error);
+    return 'Unknown-Error';
+  }
+}
+
 // Start server
 server.listen(Number(PORT), HOST, async () => {
   const pcInfo = getPCIdentification();
-  const networkInfo = await getNetworkConnectionDetails();
+  const localIP = await getLocalIPAddress();
   
   console.log(`🐑 MdsWinShepherd Agent running on ${HOST}:${PORT}`);
   console.log(`💻 PC Name: ${pcInfo.pcName}`);
   console.log(`🆔 Agent ID: ${pcInfo.agentId}`);
-  console.log(`🌐 Local IP: ${networkInfo.localIP || 'Unknown'}`);
-  console.log(`📡 Network Access: http://${networkInfo.localIP || HOST}:${PORT}`);
-  console.log(`⚡ WebSocket: ws://${networkInfo.localIP || HOST}:${PORT}`);
-  console.log(`📊 Connect from Controller at: http://${networkInfo.localIP || HOST}:${PORT}`);
+  console.log(`🌐 Local IP: ${localIP}`);
+  console.log(`📡 Network Access: http://${localIP}:${PORT}`);
+  console.log(`⚡ WebSocket: ws://${localIP}:${PORT}`);
+  console.log(`📊 Connect from Controller at: http://${localIP}:${PORT}`);
   console.log(`🔒 Firewall: Ensure port ${PORT} is open for network access`);
+  console.log(`📋 Add this IP to your controller: ${localIP}:${PORT}`);
 });
 
 // Graceful shutdown

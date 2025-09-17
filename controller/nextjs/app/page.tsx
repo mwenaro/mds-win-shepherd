@@ -192,11 +192,15 @@ export default function Dashboard() {
     const agentIP = newAgentIP.trim()
     const newId = (pcs.length + 1).toString()
     
+    addLog(`🔗 Attempting to connect to agent at ${agentIP}...`)
+    
     // Test connection to the agent
     try {
       const response = await axios.get(`http://${agentIP}/status`, {
-        timeout: 5000
+        timeout: 10000 // Increased timeout for network connections
       })
+      
+      addLog(`📡 Received response from ${agentIP}: ${JSON.stringify(response.data)}`)
       
       if (response.data.success) {
         const newPC: PC = {
@@ -210,9 +214,14 @@ export default function Dashboard() {
         setPcs(prev => [...prev, newPC])
         setNewAgentIP('')
         addLog(`✅ Agent added successfully: ${agentIP}`)
+      } else {
+        addLog(`❌ Agent responded but status is not successful: ${JSON.stringify(response.data)}`)
       }
-    } catch (error) {
+    } catch (error: any) {
+      const errorMsg = error.response?.data || error.message || 'Unknown error'
       addLog(`❌ Failed to connect to agent at ${agentIP}`)
+      addLog(`   Error details: ${errorMsg}`)
+      addLog(`   Error code: ${error.code || 'N/A'}`)
     }
   }
 
@@ -228,17 +237,25 @@ export default function Dashboard() {
     addLog('🔍 Scanning network for agents...')
     setIsLoading(true)
     
-    // Get local network range (simplified - scanning common local IPs)
-    const baseIP = '192.168.1.' // Most common home network range
+    // Scan common network ranges
+    const networkRanges = [
+      '192.168.0.',  // Common router default
+      '192.168.1.',  // Most common home network range  
+      '10.0.0.',     // Another common range
+    ]
+    
     const promises = []
     
-    for (let i = 100; i <= 150; i++) {
-      const ip = `${baseIP}${i}:3001`
-      promises.push(
-        axios.get(`http://${ip}/status`, { timeout: 2000 })
-          .then(() => ({ ip, success: true }))
-          .catch(() => ({ ip, success: false }))
-      )
+    // Scan each network range
+    for (const baseIP of networkRanges) {
+      for (let i = 1; i <= 254; i++) {
+        const ip = `${baseIP}${i}:3001`
+        promises.push(
+          axios.get(`http://${ip}/status`, { timeout: 1500 })
+            .then(() => ({ ip, success: true }))
+            .catch(() => ({ ip, success: false }))
+        )
+      }
     }
     
     try {
@@ -377,10 +394,13 @@ export default function Dashboard() {
               </button>
             </div>
             
-            <div className="text-sm text-gray-600">
-              <p>• Manually add agents by IP address, or use Auto Discover to scan your network</p>
-              <p>• Make sure the agent is running on the target PC and port 3001 is accessible</p>
-              <p>• Default agent port is 3001 (e.g., 192.168.1.100:3001)</p>
+            <div className="text-sm text-gray-600 bg-yellow-50 p-3 rounded border-l-4 border-yellow-400">
+              <p><strong>📋 How to Add Agents:</strong></p>
+              <p>1. <strong>Start agent</strong> on target PC (run install.bat or start-agent.bat)</p>
+              <p>2. <strong>Get IP address</strong> from agent console (e.g., "192.168.1.100:3001")</p>
+              <p>3. <strong>Enter the IP:Port</strong> in the box above and click "Add Agent"</p>
+              <p>4. <strong>Never use 0.0.0.0</strong> - that's not a real network address!</p>
+              <p>• Each PC will have a different IP address (192.168.1.100, 192.168.1.101, etc.)</p>
             </div>
           </div>
         )}
